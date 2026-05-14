@@ -150,18 +150,23 @@ function QuizPage() {
   }
 
   if (error) {
-    return (
-      <Container maxWidth="md">
-        <Paper sx={{ p: 4, mt: 4, textAlign: 'center' }}>
-          <Typography variant="h5" color="error" gutterBottom>Error</Typography>
-          <Typography>{error}</Typography>
-          <Button sx={{ mt: 2 }} variant="contained" onClick={() => navigate('/dashboard')}>
-            Back to Dashboard
-          </Button>
-        </Paper>
-      </Container>
-    );
-  }
+  return (
+    <Container maxWidth="md">
+      <Paper sx={{ p: 4, mt: 4, textAlign: 'center' }}>
+        <Typography variant="h5" gutterBottom>
+          ⏳ Backend is waking up...
+        </Typography>
+        <Typography color="text.secondary" sx={{ mb: 2 }}>
+          Render's free tier sleeps after inactivity. It'll be ready in a few seconds.
+        </Typography>
+        <LinearProgress sx={{ mb: 3 }} />
+        <Button variant="contained" onClick={generateQuiz}>
+          Try Again
+        </Button>
+      </Paper>
+    </Container>
+  );
+}
 
   // Results Page with detailed review
   if (submitted && score) {

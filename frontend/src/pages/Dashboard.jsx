@@ -32,6 +32,28 @@ function Dashboard() {
   const [stats, setStats] = useState(null);
   const [userStats, setUserStats] = useState(null);
   const [showSpecializations, setShowSpecializations] = useState(false);
+  const [backendStatus, setBackendStatus] = useState('checking'); // 'checking', 'online', 'offline'
+
+const fetchStats = async () => {
+  setBackendStatus('checking');
+  
+  const tryConnect = async (attempts = 0) => {
+    try {
+      const response = await axios.get(`${API_URL}/health`, { timeout: 15000 });
+      setStats(response.data);
+      setBackendStatus('online');
+    } catch (error) {
+      if (attempts < 4) {
+        // Wait longer each retry
+        setTimeout(() => tryConnect(attempts + 1), (attempts + 1) * 4000);
+      } else {
+        setBackendStatus('offline');
+      }
+    }
+  };
+  
+  tryConnect();
+};
 
   const domains = [
     { 
@@ -132,7 +154,16 @@ function Dashboard() {
 
       {/* Status Bar */}
       <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, mb: 4, flexWrap: 'wrap' }}>
-        <Chip size="small" label={`Backend: ${stats ? '🟢 Online' : '🔴 Offline'}`} variant="outlined" />
+        <Chip 
+          size="small" 
+          label={`Backend: ${
+            backendStatus === 'checking' ? '⏳ Waking up...' : 
+            backendStatus === 'online' ? '🟢 Online' : 
+            '🔴 Offline'
+          }`} 
+          variant="outlined" 
+          color={backendStatus === 'offline' ? 'error' : 'default'}
+        />
         <Chip size="small" label={`AI Engine: ${stats?.openrouter ? '🟢 Ready' : '⚪ Standby'}`} variant="outlined" />
         <Chip size="small" label={`Questions: 120+`} variant="outlined" />
         {user ? (
