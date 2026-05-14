@@ -64,27 +64,33 @@ function QuizPage() {
   const generateQuiz = async () => {
     setLoading(true);
     setError(null);
+    setSubmitted(false);
+    setScore(null);
+    setAnswers({});
+    setCurrentQuestion(0);
+    setReviewMode(false);
     
-    const tryGenerate = async (retries = 2) => {
-      try {
-        const response = await axios.post(`${API_URL}/quiz/generate`, {
-          userId: user?.id || null,
-          domainId: parseInt(domainId),
-          questionCount: 5,
-          useAI: false,
-          specialization: domainId === '3' ? specialization : null,
-        });
-        setQuestions(response.data.questions);
-        setLoading(false);
-      } catch (error) {
-        if (retries > 0) {
-          setTimeout(() => tryGenerate(retries - 1), 3000);
-        } else {
-          setError('Backend is waking up. Please try again in a few seconds.');
-          setLoading(false);
-        }
-      }
-    };
+    // Ask user how many questions
+    const count = prompt('How many questions? (5-50)', '10');
+    const questionCount = Math.min(Math.max(parseInt(count) || 10, 5), 50);
+    
+    try {
+      const response = await axios.post(`${API_URL}/quiz/generate`, {
+        userId: user?.id || null,
+        domainId: parseInt(domainId),
+        questionCount: questionCount,
+        useAI: true,
+        specialization: domainId === '3' ? specialization : null,
+      });
+      
+      setQuestions(response.data.questions);
+      setLoading(false);
+    } catch (error) {
+      console.error('Error generating quiz:', error);
+      setError('Failed to generate quiz. Backend may be waking up, try again.');
+      setLoading(false);
+    }
+  };
     
     tryGenerate();
   };
