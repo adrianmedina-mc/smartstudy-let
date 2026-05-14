@@ -30,7 +30,7 @@ import {
 } from '@mui/icons-material';
 import axios from 'axios';
 
-const API_URL = 'http://localhost:5000/api';
+const API_URL = 'https://smartstudy-let-api.onrender.com/api';
 
 function MockExam() {
   const navigate = useNavigate();

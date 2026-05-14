@@ -17,7 +17,7 @@ import {
 import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
 
-const API_URL = 'http://localhost:5000/api';
+const API_URL = 'https://smartstudy-let-api.onrender.com/api';
 
 function Analytics() {
   const navigate = useNavigate();
