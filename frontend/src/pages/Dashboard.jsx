@@ -65,16 +65,24 @@ function Dashboard() {
   useEffect(() => {
     fetchStats();
     if (user) fetchUserStats();
-  }, [user]);
+      }, [user]);
 
-  const fetchStats = async () => {
-    try {
-      const response = await axios.get(`${API_URL}/health`);
-      setStats(response.data);
-    } catch (error) {
-      console.log('Backend not connected');
-    }
-  };
+      const fetchStats = async () => {
+      try {
+        const response = await axios.get(`${API_URL}/health`);
+        setStats(response.data);
+      } catch (error) {
+        // Retry once after 3 seconds (Render wake-up time)
+        setTimeout(async () => {
+          try {
+            const response = await axios.get(`${API_URL}/health`);
+            setStats(response.data);
+          } catch (retryError) {
+            console.log('Backend waking up...');
+          }
+        }, 3000);
+      }
+    };
 
   const fetchUserStats = async () => {
     try {

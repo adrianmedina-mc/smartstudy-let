@@ -63,20 +63,30 @@ function QuizPage() {
 
   const generateQuiz = async () => {
     setLoading(true);
-    try {
-      const response = await axios.post(`${API_URL}/quiz/generate`, {
-        userId: user?.id || null,
-        domainId: parseInt(domainId),
-        questionCount: 5,
-        useAI: false,
-        specialization: domainId === '3' ? specialization : null,
-      });
-      setQuestions(response.data.questions);
-      setLoading(false);
-    } catch (error) {
-      setError('Failed to generate quiz');
-      setLoading(false);
-    }
+    setError(null);
+    
+    const tryGenerate = async (retries = 2) => {
+      try {
+        const response = await axios.post(`${API_URL}/quiz/generate`, {
+          userId: user?.id || null,
+          domainId: parseInt(domainId),
+          questionCount: 5,
+          useAI: false,
+          specialization: domainId === '3' ? specialization : null,
+        });
+        setQuestions(response.data.questions);
+        setLoading(false);
+      } catch (error) {
+        if (retries > 0) {
+          setTimeout(() => tryGenerate(retries - 1), 3000);
+        } else {
+          setError('Backend is waking up. Please try again in a few seconds.');
+          setLoading(false);
+        }
+      }
+    };
+    
+    tryGenerate();
   };
 
   const handleAnswer = (index, answer) => {
