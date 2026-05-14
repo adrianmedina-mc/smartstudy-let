@@ -124,35 +124,52 @@ module.exports = function(supabase) {
   });
 
   // Mock exam
-router.post('/mock-exam', async (req, res) => {
-  try {
-    const { userId, domainId } = req.body;
-    const domainMap = { 1: 'generalEducation', 2: 'professionalEducation', 3: 'specialization' };
-    const domain = domainMap[domainId] || 'generalEducation';
-    const specs = { totalQuestions: 30, timeLimit: 30 };
+  router.post('/mock-exam', async (req, res) => {
+    try {
+      const { userId, domainId } = req.body;
+      
+      // Default to genEd if no domainId
+      const domainMap = { 1: 'generalEducation', 2: 'professionalEducation', 3: 'specialization' };
+      const domain = domainMap[domainId] || 'generalEducation';
+      
+      console.log('Mock exam requested for domain:', domain);
+      
+      // Try to get questions
+      let questions = [];
+      try {
+        questions = quizGenerator.generateAdaptiveQuiz(domain, [], 30);
+      } catch (genError) {
+        console.error('Question generation error:', genError);
+      }
 
-    let questions = quizGenerator.generateAdaptiveQuiz(domain, [], specs.totalQuestions);
+      // If no questions, return error with details
+      if (!questions || questions.length === 0) {
+        return res.status(500).json({ 
+          error: 'No questions available',
+          domain: domain,
+          available: Object.keys(quizGenerator.questionBank || {})
+        });
+      }
 
-    if (!questions || questions.length === 0) {
-      return res.status(500).json({ error: 'No questions available for this domain' });
+      // Duplicate if not enough
+      while (questions.length < 30) {
+        questions = [...questions, ...questions].slice(0, 30);
+      }
+      
+      questions = questions.sort(() => Math.random() - 0.5);
+
+      res.json({
+        sessionId: `mock-${Date.now()}`,
+        questions,
+        totalQuestions: 30,
+        timeLimit: 30,
+        isMockExam: true
+      });
+    } catch (error) {
+      console.error('Mock exam error:', error);
+      res.status(500).json({ error: error.message });
     }
-
-    while (questions.length < specs.totalQuestions) {
-      questions = [...questions, ...questions].slice(0, specs.totalQuestions);
-    }
-    questions = questions.sort(() => Math.random() - 0.5);
-
-    res.json({
-      sessionId: `mock-${Date.now()}`,
-      questions,
-      totalQuestions: specs.totalQuestions,
-      timeLimit: specs.timeLimit,
-      isMockExam: true
-    });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
+  });
 
   router.get('/ai-status', async (req, res) => {
     const status = await openRouterService.checkAvailability();
