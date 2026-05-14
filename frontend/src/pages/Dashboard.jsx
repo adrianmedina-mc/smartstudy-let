@@ -32,28 +32,7 @@ function Dashboard() {
   const [stats, setStats] = useState(null);
   const [userStats, setUserStats] = useState(null);
   const [showSpecializations, setShowSpecializations] = useState(false);
-  const [backendStatus, setBackendStatus] = useState('checking'); // 'checking', 'online', 'offline'
-
-const fetchStats = async () => {
-  setBackendStatus('checking');
-  
-  const tryConnect = async (attempts = 0) => {
-    try {
-      const response = await axios.get(`${API_URL}/health`, { timeout: 15000 });
-      setStats(response.data);
-      setBackendStatus('online');
-    } catch (error) {
-      if (attempts < 4) {
-        // Wait longer each retry
-        setTimeout(() => tryConnect(attempts + 1), (attempts + 1) * 4000);
-      } else {
-        setBackendStatus('offline');
-      }
-    }
-  };
-  
-  tryConnect();
-};
+  const [backendStatus, setBackendStatus] = useState('checking');
 
   const domains = [
     { 
@@ -84,27 +63,25 @@ const fetchStats = async () => {
     { id: 'socialStudies', name: 'Social Studies', icon: <SocialIcon sx={{ fontSize: 36, color: 'white' }} />, color: '#4527a0', questions: 5 },
   ];
 
-  useEffect(() => {
-    fetchStats();
-    if (user) fetchUserStats();
-      }, [user]);
-
-      const fetchStats = async () => {
+  const fetchStats = async () => {
+    setBackendStatus('checking');
+    
+    const tryConnect = async (attempts = 0) => {
       try {
-        const response = await axios.get(`${API_URL}/health`);
+        const response = await axios.get(`${API_URL}/health`, { timeout: 15000 });
         setStats(response.data);
+        setBackendStatus('online');
       } catch (error) {
-        // Retry once after 3 seconds (Render wake-up time)
-        setTimeout(async () => {
-          try {
-            const response = await axios.get(`${API_URL}/health`);
-            setStats(response.data);
-          } catch (retryError) {
-            console.log('Backend waking up...');
-          }
-        }, 3000);
+        if (attempts < 5) {
+          setTimeout(() => tryConnect(attempts + 1), (attempts + 1) * 3000);
+        } else {
+          setBackendStatus('offline');
+        }
       }
     };
+    
+    tryConnect();
+  };
 
   const fetchUserStats = async () => {
     try {
@@ -114,6 +91,14 @@ const fetchStats = async () => {
       console.log('Could not fetch user stats');
     }
   };
+
+  useEffect(() => {
+    fetchStats();
+  }, []);
+
+  useEffect(() => {
+    if (user) fetchUserStats();
+  }, [user]);
 
   return (
     <Box sx={{ pb: 6 }}>
@@ -189,7 +174,6 @@ const fetchStats = async () => {
                 '&:hover': { transform: 'translateY(-4px)', boxShadow: 8 }
               }}
             >
-              {/* Card Header */}
               <Box sx={{ 
                 background: domain.gradient, 
                 p: 3, 
@@ -206,7 +190,6 @@ const fetchStats = async () => {
                 </Box>
               </Box>
               
-              {/* Card Body */}
               <CardContent sx={{ textAlign: 'center', py: 3 }}>
                 <Typography variant="h3" fontWeight="bold" sx={{ color: domain.color }}>
                   {domain.questions}
@@ -218,7 +201,6 @@ const fetchStats = async () => {
               
               <Divider />
               
-              {/* Card Actions */}
               <CardActions sx={{ justifyContent: 'center', p: 2, gap: 1 }}>
                 <Button
                   variant="contained"
@@ -359,6 +341,17 @@ const fetchStats = async () => {
           <Grid item xs={6} sm={3}>
             <Button 
               fullWidth 
+              variant="contained"
+              startIcon={<AIIcon />}
+              onClick={() => navigate('/study-plan')}
+              sx={{ bgcolor: '#7c4dff', borderRadius: 2, py: 1.5 }}
+            >
+              AI Study Plan
+            </Button>
+          </Grid>
+          <Grid item xs={6} sm={3}>
+            <Button 
+              fullWidth 
               variant="outlined"
               startIcon={<TimerIcon />}
               onClick={() => navigate('/quiz/1')}
@@ -378,18 +371,7 @@ const fetchStats = async () => {
               Quick ProfEd
             </Button>
           </Grid>
-          <Grid item xs={6} sm={3}>
-              <Button 
-                fullWidth 
-                variant="contained"
-                startIcon={<AIIcon />}
-                onClick={() => navigate('/study-plan')}
-                sx={{ bgcolor: '#7c4dff', borderRadius: 2, py: 1.5 }}
-              >
-                AI Study Plan
-              </Button>
-            </Grid>
-          </Grid>
+        </Grid>
       </Paper>
     </Box>
   );
