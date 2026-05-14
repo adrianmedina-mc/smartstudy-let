@@ -12,19 +12,32 @@ app.use(cors({
   origin: [
     'http://localhost:5173',
     'http://localhost:3000',
-    'https://smartstudy-let.vercel.app',  // Your Vercel URL
     process.env.FRONTEND_URL
   ].filter(Boolean),
   credentials: true
 }));
+app.use(express.json());
+
+// Initialize Supabase
+const { createClient } = require('@supabase/supabase-js');
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_KEY
+);
 
 console.log('✅ Supabase connected');
 
+// Import routes
+const authRoutes = require('./routes/auth')(supabase);
+const quizRoutes = require('./routes/quiz')(supabase);
+const analyticsRoutes = require('./routes/analytics')(supabase);
+const studyPlanRoutes = require('./routes/studyPlan')(supabase);
+
 // Routes
-app.use('/api/auth', require('./routes/auth')(supabase));
-app.use('/api/quiz', require('./routes/quiz')(supabase));
-app.use('/api/analytics', require('./routes/analytics')(supabase));
-app.use('/api/study-plan', require('./routes/studyPlan')(supabase));
+app.use('/api/auth', authRoutes);
+app.use('/api/quiz', quizRoutes);
+app.use('/api/analytics', analyticsRoutes);
+app.use('/api/study-plan', studyPlanRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
@@ -36,6 +49,6 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-app.listen(PORT, () => {
-  console.log(`✅ SmartStudy LET Server running on http://localhost:${PORT}`);
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`✅ SmartStudy LET Server running on port ${PORT}`);
 });
