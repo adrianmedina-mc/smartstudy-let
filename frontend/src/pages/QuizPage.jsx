@@ -561,6 +561,6 @@ function QuizPage() {
       </Paper>
     </Container>
   );
-}
+
 
 export default QuizPage;
